@@ -20,17 +20,19 @@ function Clubs() {
   const [search, setSearch] = useState<string>("");
   const [display, setDisplay] = useState<Club[]>([]);
 
+  // Загрузка данных
   useEffect(() => {
     xior.get("http://127.0.0.1:8000/clubs/all").then((resp) => {
       setClubs(resp.data.data);
     });
+  }, []); // [] чтобы вызвать только один раз при монтировании
 
+  // Фильтрация по поиску
+  useEffect(() => {
     setDisplay(
-      clubs.filter((c) =>
-        c.title.toLowerCase().includes(String(search.toLowerCase())),
-      ),
+      clubs.filter((c) => c.title.toLowerCase().includes(search.toLowerCase())),
     );
-  }, [search, clubs]);
+  }, [search, clubs]); // Обновлять, когда меняется либо поиск, либо клубы
 
   return (
     <div>

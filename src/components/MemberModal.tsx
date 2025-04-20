@@ -4,16 +4,28 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDrag } from "@use-gesture/react";
 import { useSpring, animated } from "@react-spring/web";
+import xior from "xior";
+import { Member } from "@/models/member";
+import { memberClub } from "@/models/memberClubs";
 
-export default function MemberModal() {
+export default function MemberModal({ member }: { member: Member }) {
   const [isOpen, setIsOpen] = useState(false);
   const [{ y }, api] = useSpring(() => ({ y: 0 }));
   const AnimatedDiv = animated(motion.div);
+  const [memberClubs, setMemberClubs] = useState<memberClub[]>([]);
 
   const open = () => {
     setIsOpen(true);
-    api.start({ y: 0 }); // сброс позиции при открытии
+    api.start({ y: 0 });
   };
+
+  useEffect(() => {
+    xior
+      .get(`http://127.0.0.1:8000/clubs/member/${member.barcode}/clubs`)
+      .then((res) => {
+        setMemberClubs(res.data.data);
+      });
+  }, [member]);
 
   const close = () => setIsOpen(false);
 
@@ -45,7 +57,7 @@ export default function MemberModal() {
         onClick={open}
         className="w-full text-left px-4 py-2 bg-white border rounded-xl shadow-sm hover:bg-gray-50"
       >
-        Имя Фамилия
+        {member.name + " " + member.surname}
       </button>
 
       <AnimatePresence>
@@ -63,14 +75,16 @@ export default function MemberModal() {
             >
               <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
               <h2 className="text-xl font-bold text-center mb-4">
-                Имя Фамилия
+                {member.name + " " + member.surname}
               </h2>
 
               <div className="text-sm font-medium mb-2">Клубы</div>
               <div className="space-y-2">
-                <div className="px-4 py-2 border rounded-lg">
-                  Название клуба
-                </div>
+                {memberClubs.map((club) => (
+                  <div key={club.title} className="px-4 py-2 border rounded-lg">
+                    {club.title}
+                  </div>
+                ))}
               </div>
             </AnimatedDiv>
           </motion.div>

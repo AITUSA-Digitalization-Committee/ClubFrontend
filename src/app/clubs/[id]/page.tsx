@@ -1,110 +1,64 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Club } from "@/models/club";
-import xior from "xior";
-import MemberModal from "@/components/MemberModal";
-import { Member } from "@/models/member";
+import { ApiResponse, IClub } from "@/types";
+import View from "@/components/View";
+import { api } from "@/api/instance";
+import Banner from "@/components/info/Banner";
+import Info from "@/components/info/Info";
+import Members from "@/components/info/Members";
+import { toast } from "react-toastify";
+import Loading from "@/components/Loading";
+import Modal from "@/components/info/MemberModal";
 
-function SoloClub() {
-  const router = useRouter();
-  const params = useParams(); // 👈 получаем параметры из URL
-  const clubId = params.id as string; // 👈 получаем id из URL
+function ClubPage() {
+  const { id } = useParams();
 
-  const [clubData, setClubData] = useState<Club>();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [search, setSearch] = useState<string>("");
-  const [display, setDisplay] = useState<Member[]>([]);
+  const [club, setClub] = useState<IClub>();
+  const [loading, setLoading] = useState(true);
+
+  const fetchClub = async () => {
+    await api.get<ApiResponse<IClub>>(`/clubs/get/${id}`)
+      .then(({ data }) => {
+
+        if (data.statusCode != 200) {
+          toast.error(data.message);
+          return;
+        }
+
+        setClub(data.data);
+
+      }).catch(() => {
+        toast.error('Не удалось загрузить данные клуба');
+      }).finally(() => {
+        setLoading(false);
+      });
+  }
 
   useEffect(() => {
-    xior.get(`http://127.0.0.1:8000/clubs/get/${clubId}`).then((response) => {
-      const club = response.data.data;
-      setClubData(club);
-      setMembers(club.members ?? []);
-    });
-  }, [clubId]);
+    fetchClub();
+  }, [id])
 
-  useEffect(() => {
-    setDisplay(
-      members.filter((c) =>
-        (c.name.toLowerCase() + " " + c.surname.toLowerCase()).includes(
-          search.toLowerCase(),
-        ),
-      ),
-    );
-  }, [search, members]);
+  if (loading || !club) {
+    return <Loading className="h-dvh" />;
+  }
+
+  const props = {
+    club: club
+  }
 
   return (
-    <div className="club">
-      <div>
-        <button onClick={() => router.back()} className=" border-2 p-1">
-          Назад
-        </button>
-      </div>
-      <div className="Banner p-4">
-        <div className="w-full h-64 relative overflow-hidden rounded-xl border-2 border-gray-300">
-          {clubData?.banner && clubData.banner.startsWith("http") ? (
-            <Image
-              src={clubData.banner}
-              alt="Баннер клуба"
-              fill
-              className="object-cover rounded-xl"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              Нет баннера
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-row justify-between items-center ">
-        <div className="font-bold">{clubData?.title}</div>
-        {true && (
-          <button
-            className="border-2 p-1"
-            onClick={() => {
-              router.push("admin/" + 1);
-            }}
-          >
-            Edit
-          </button>
-        )}
-      </div>
-      <div className="border-0 rounded-b-sm">{clubData?.description}</div>
-      <div className="flex flex-col p-4">
-        <div>Участники({clubData?.members?.length})</div>
-        <div className="flex-row p-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Поиск"
-              className="w-full p-2 border border-gray-300 rounded-md pl-10"
-              onInput={(e) => {
-                setSearch(e.currentTarget.value);
-              }}
-            />
-            <svg
-              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
-        {display.map((member, index) => (
-          <MemberModal key={index} member={member} />
-        ))}
-      </div>
-    </div>
+    <View container className="gap-6 relative">
+
+      <Banner {...props} />
+      <Info {...props} />
+
+      <Members {...props} />
+      <Modal />
+
+    </View>
   );
 }
 
-export default SoloClub;
+export default ClubPage;

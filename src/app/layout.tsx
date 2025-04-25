@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
+import Authorize from "@/components/Authorize";
 
 export const metadata: Metadata = {
   title: "Club front",
@@ -15,11 +16,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-
         <ToastContainer autoClose={2000} hideProgressBar={true} />
-
-        {children}
-
+        <Authorize>{children}</Authorize>
       </body>
     </html>
   );

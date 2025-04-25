@@ -1,12 +1,12 @@
-import xior from 'xior';
+import xior from "xior";
 
 export const defaultOptions: Record<string, string> = {
-    'Content-Type': 'application/json'
-}
+  "Content-Type": "application/json",
+};
 
-export const baseUrl = 'http://localhost:8000'
+export const baseUrl = "http://localhost:8000";
 
 export const api = xior.create({
-    baseURL: baseUrl,
-    headers: defaultOptions
+  baseURL: baseUrl,
+  headers: defaultOptions,
 });

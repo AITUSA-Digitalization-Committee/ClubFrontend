@@ -1,32 +1,37 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useDrag } from "@use-gesture/react";
-import { useSpring, animated } from "@react-spring/web";
-import xior from "xior";
-import { IMember, IMemberClub } from "@/types";
+import { IMemberClub } from "@/types";
 import { useModal } from "@/hooks/modal";
 import { api } from "@/api/instance";
+import { useAuth } from "@/hooks/auth";
 
 export default function Modal() {
+  const { token } = useAuth();
 
   const { selectedMember, setSelectedMember } = useModal();
 
   const [memberClubs, setMemberClubs] = useState<IMemberClub[]>([]);
 
-  useEffect(() => {
-
-    if (!selectedMember) {
-      return;
-    }
-
-    api
-      .get(`/clubs/member/${selectedMember.barcode}/clubs`)
+  const fetchMember = async () => {
+    await api.get(`/clubs/member/${selectedMember?.barcode}/clubs`, {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
       .then((res) => {
         setMemberClubs(res.data.data);
       });
-  }, [selectedMember]);
+  }
+
+  useEffect(() => {
+
+    if (!selectedMember || token == '') {
+      return;
+    }
+
+    fetchMember()
+  }, [selectedMember, token]);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [startY, setStartY] = useState(0);

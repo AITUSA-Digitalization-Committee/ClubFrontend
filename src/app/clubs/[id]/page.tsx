@@ -15,56 +15,57 @@ import { useAuth } from "@/hooks/auth";
 
 function ClubPage() {
   const { id } = useParams();
-  const [club, setClub] = useState<IClub>();
-  const [loading, setLoading] = useState(true);
   const { token } = useAuth();
 
-  const fetchClub = async (authToken: string) => {
-    if (!id) {
-      toast.error("Некорректный ID клуба");
-      setLoading(false);
-      return;
-    }
+  const [club, setClub] = useState<IClub>();
+  const [loading, setLoading] = useState(true);
 
-    console.log("📡 Запрос клуба с ID:", id);
-    try {
-      const { data } = await api.get<ApiResponse<IClub>>(`/clubs/get/${id}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (data.statusCode !== 200) {
-        toast.error(data.message || "Ошибка получения данных клуба");
-        return;
+  const fetchClub = async () => {
+    await api.get<ApiResponse<IClub>>(`/clubs/get/${id}`, {
+      headers: {
+        Authorization: 'Bearer ' + token
       }
+    })
+      .then(({ data }) => {
 
-      setClub(data.data);
-    } catch (error) {
-      console.error("❌ Ошибка при получении данных клуба:", error);
-      toast.error("Не удалось загрузить данные клуба");
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (data.statusCode != 200) {
+          toast.error(data.message);
+          return;
+        }
+
+        setClub(data.data);
+
+      }).catch(() => {
+        toast.error('Не удалось загрузить данные клуба');
+      }).finally(() => {
+        setLoading(false);
+      });
+  }
 
   useEffect(() => {
-    if (token) {
-      fetchClub(token);
+    if (token == "") {
+      return;
     }
-  }, [token]);
+    fetchClub();
+  }, [id, token])
 
-  // Пока нет токена или загрузка идёт — показываем лоадер
-  if (loading || !token || !club) {
+  if (loading || !club) {
     return <Loading className="h-dvh" />;
+  }
+
+  const props = {
+    club: club
   }
 
   return (
     <View container className="gap-6 relative">
-      <Banner club={club} />
-      <Info club={club} />
-      <Members club={club} />
+
+      <Banner {...props} />
+      <Info {...props} />
+
+      <Members {...props} />
       <Modal />
+
     </View>
   );
 }

@@ -1,14 +1,22 @@
 import { create } from "zustand";
 
 type AuthType = {
-  token: string;
-  setToken: (token: string) => void;
+    token: string;
+    loading: boolean;
+
+    setLoading: (loading: boolean) => void;
+    setToken: (string: string) => void;
+
 };
 
 export const useAuth = create<AuthType>((set) => ({
-  token: "",
-  setToken: (token) =>
-    set({
-      token: token,
+    token: "",
+    loading: true,
+
+    setLoading: (loading) => set({
+        loading: loading
+    }),
+    setToken: (token) => set({
+        token: token
     }),
 }));

@@ -21,51 +21,50 @@ function ClubPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchClub = async () => {
-    await api.get<ApiResponse<IClub>>(`/clubs/get/${id}`, {
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    })
+    await api
+      .get<ApiResponse<IClub>>(`/clubs/get/${id}`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      })
       .then(({ data }) => {
-
         if (data.statusCode != 200) {
           toast.error(data.message);
           return;
         }
 
         setClub(data.data);
-
-      }).catch(() => {
-        toast.error('Не удалось загрузить данные клуба');
-      }).finally(() => {
+      })
+      .catch(() => {
+        toast.error("Не удалось загрузить данные клуба");
+      })
+      .finally(() => {
         setLoading(false);
       });
-  }
+  };
 
   useEffect(() => {
     if (token == "") {
       return;
     }
     fetchClub();
-  }, [id, token])
+  }, [id, token]);
 
   if (loading || !club) {
     return <Loading className="h-dvh" />;
   }
 
   const props = {
-    club: club
-  }
+    club: club,
+  };
 
   return (
     <View container className="gap-6 relative">
-
       <Banner {...props} />
       <Info {...props} />
 
       <Members {...props} />
       <Modal />
-
     </View>
   );
 }

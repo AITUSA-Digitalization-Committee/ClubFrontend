@@ -24,8 +24,8 @@ interface IClub {
 }
 
 interface IMember {
-  id: string;
-  barcode: number;
+  id?: string;
+  barcode: string;
   name: string;
   surname: string;
   admin?: boolean;

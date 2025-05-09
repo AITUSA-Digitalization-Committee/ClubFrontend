@@ -1,15 +1,20 @@
 import { IClub } from "@/types";
 import { api } from "@/api/instance";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/auth";
+import Authorize from "../Authorize";
 
 function Banner({ club }: { club: IClub }) {
   const [bannerUrl, setBannerUrl] = useState<string | undefined>();
-
+  const { token } = useAuth();
   useEffect(() => {
     const fetchLogo = async () => {
       try {
         const response = await api.get(`/images/${club.id}/banner`, {
           responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         const imageBlob = response.data;
@@ -21,7 +26,7 @@ function Banner({ club }: { club: IClub }) {
     };
 
     fetchLogo();
-  }, [club.id]);
+  }, [club.id, token]);
   return (
     <div className="bg-muted rounded-2xl h-40 overflow-hidden">
       <img src={bannerUrl} className="object-contain w-full h-full" />

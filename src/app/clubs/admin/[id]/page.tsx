@@ -1,14 +1,23 @@
 "use client";
 
 import { api } from "@/api/instance";
+import Members from "@/components/info/Members";
 import { useAuth } from "@/hooks/auth";
+import { IClub, IMember } from "@/types";
+
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function AdminPage() {
+  const placeholder: IClub = {
+    id: "228",
+    title: "228",
+    description: "asd",
+    members: [],
+  };
   const { id } = useParams();
   const { token } = useAuth();
-  // ОБЯЗ ТОКЕН ОТПРАВИТЬ
+  const [club, setClub] = useState<IClub>(placeholder);
   const [clubName, setClubName] = useState("");
   const [clubDescription, setClubDescription] = useState("");
   const [clubImage, setClubImage] = useState<File | null>(null);
@@ -16,6 +25,33 @@ function AdminPage() {
   const [memberBarcode, setMemberBarcode] = useState("");
   const [memberFirstName, setMemberFirstName] = useState("");
   const [memberLastName, setMemberLastName] = useState("");
+  const [allMembers, setAllMembers] = useState<IMember[]>([]);
+
+  const handleMembers = () => {
+    if (memberBarcode.length > 5 && !allMembers) {
+      api
+        .get("/clubs/members/all", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          setAllMembers(res.data.data);
+        });
+      console.log(allMembers);
+    }
+  };
+
+  useEffect(() => {
+    handleMembers();
+    const data: IMember | undefined = allMembers.find(
+      (item: IMember) => item.barcode == memberBarcode,
+    );
+    if (data) {
+      setMemberFirstName(data.name);
+      setMemberLastName(data.surname);
+    }
+  }, [memberBarcode, allMembers]);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -24,26 +60,103 @@ function AdminPage() {
     setter(e.target.files?.[0] || null);
   };
 
-  const handleClubSubmit = () => {
-    console.log("Club Info Submitted:", { clubName, clubDescription });
-    //TODO POST data to backend
-    // роут clubs/edit/:id
+  const fetchClub = () => {
+    api
+      .get(`clubs/get/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((resp) => {
+        console.log(resp.data);
+        setClub(resp.data.data);
+      });
   };
 
-  const handleImageSubmit = () => {
-    console.log("Image Upload:", { clubImage, clubBanner });
-    // TODO: POST files to backend (e.g. with FormData)
-    // роут /images/:id/logo и /images/:id/banner
+  useEffect(() => {
+    fetchClub();
+  }, [token, memberBarcode]);
+
+  useEffect(() => {
+    setClubName(club.title);
+    setClubDescription(club.description);
+  }, [club]);
+  const handleClubSubmit = async () => {
+    try {
+      const response = await api.post(
+        `/clubs/edit/${id}`,
+        {
+          title: clubName,
+          description: clubDescription,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      console.log("Club updated:", response.data);
+      fetchClub(); // Обновляем данные
+    } catch (err) {
+      console.error("Failed to update club:", err);
+    }
   };
 
-  const handleMemberSubmit = () => {
-    console.log("Member Added:", {
-      barcode: memberBarcode,
-      firstName: memberFirstName,
-      lastName: memberLastName,
-    });
-    // TODO: POST member to backend
-    // роут /clubs/member/add
+  const handleImageSubmit = async () => {
+    try {
+      if (clubImage) {
+        const formData = new FormData();
+        formData.append("file", clubImage);
+        await api.post(`/images/${id}/logo`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      if (clubBanner) {
+        const formData = new FormData();
+        formData.append("file", clubBanner);
+        await api.post(`/images/${id}/banner`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      console.log("Images uploaded");
+      fetchClub(); // Обновим, если изображения отображаются
+    } catch (err) {
+      console.error("Image upload failed:", err);
+    }
+  };
+
+  const handleMemberSubmit = async () => {
+    try {
+      const response = await api.post(
+        "/clubs/member/add",
+        {
+          club_id: id,
+          member_barcode: memberBarcode,
+          name: memberFirstName,
+          surname: memberLastName,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      console.log("Member added:", response.data);
+      setMemberBarcode("");
+      setMemberFirstName("");
+      setMemberLastName("");
+      fetchClub(); // Чтобы обновить список участников
+    } catch (err) {
+      console.error("Failed to add member:", err);
+    }
   };
 
   return (
@@ -95,6 +208,7 @@ function AdminPage() {
           <input
             className="border-2"
             type="file"
+            name="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, setClubImage)}
           />
@@ -104,6 +218,7 @@ function AdminPage() {
           <input
             className="border-2"
             type="file"
+            name="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, setClubBanner)}
           />
@@ -126,6 +241,7 @@ function AdminPage() {
       >
         <h2 className="text-xl font-semibold">Add Member</h2>
         <input
+          required
           type="text"
           value={memberBarcode}
           onChange={(e) => setMemberBarcode(e.target.value)}
@@ -133,6 +249,7 @@ function AdminPage() {
           className="w-full p-2 border rounded"
         />
         <input
+          required
           type="text"
           value={memberFirstName}
           onChange={(e) => setMemberFirstName(e.target.value)}
@@ -140,6 +257,7 @@ function AdminPage() {
           className="w-full p-2 border rounded"
         />
         <input
+          required
           type="text"
           value={memberLastName}
           onChange={(e) => setMemberLastName(e.target.value)}
@@ -153,6 +271,8 @@ function AdminPage() {
           Add Member
         </button>
       </form>
+
+      <Members club={club}></Members>
     </div>
   );
 }

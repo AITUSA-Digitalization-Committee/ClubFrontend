@@ -4,6 +4,8 @@ import { IClub } from "@/types";
 import { useState, useEffect } from "react";
 import { api } from "@/api/instance";
 import Link from "next/link";
+import Authorize from "../Authorize";
+import { useAuth } from "@/hooks/auth";
 
 interface ItemProps {
   club: IClub;
@@ -11,12 +13,15 @@ interface ItemProps {
 
 function Item({ club }: ItemProps) {
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
-
+  const { token } = useAuth();
   useEffect(() => {
     const fetchLogo = async () => {
       try {
         const response = await api.get(`/images/${club.id}/logo`, {
           responseType: "blob",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         const imageBlob = response.data;
@@ -28,7 +33,7 @@ function Item({ club }: ItemProps) {
     };
 
     fetchLogo();
-  }, [club.id]);
+  }, [club.id, token]);
 
   return (
     <Link

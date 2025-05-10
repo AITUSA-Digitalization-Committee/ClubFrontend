@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
+
 import { IClub } from "@/types";
 import { api } from "@/api/instance";
-import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/auth";
-import Authorize from "../Authorize";
 
 function Banner({ club }: { club: IClub }) {
   const [bannerUrl, setBannerUrl] = useState<string | undefined>();

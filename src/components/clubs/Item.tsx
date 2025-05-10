@@ -1,10 +1,10 @@
-"use client";
+"use client";;
+
+import { useEffect, useState } from "react";
 
 import { IClub } from "@/types";
-import { useState, useEffect } from "react";
-import { api } from "@/api/instance";
 import Link from "next/link";
-import Authorize from "../Authorize";
+import { api } from "@/api/instance";
 import { useAuth } from "@/hooks/auth";
 
 interface ItemProps {

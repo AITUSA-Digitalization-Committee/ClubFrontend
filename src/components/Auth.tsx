@@ -22,7 +22,7 @@ function Auth({ children }: AuthProps) {
             }
             
             if (event.data.type === "ACTION" && event.data.data == 'back') {
-                if (window.location.pathname != '/') {
+                if (window.location.pathname != '/clubs' && window.location.pathname != '/') {
                     window.history.back();
                 }
             }

@@ -20,6 +20,13 @@ function Auth({ children }: AuthProps) {
                 setToken(event.data.data);
                 setLoading(false);
             }
+            
+            if (event.data.type === "ACTION" && event.data.data == 'back') {
+                if (window.location.pathname != '/') {
+                    window.history.back();
+                }
+            }
+            
         };
 
         window.addEventListener("message", handleMessage);
